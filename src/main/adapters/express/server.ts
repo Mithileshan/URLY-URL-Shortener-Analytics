@@ -30,6 +30,11 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Request logging ──────────────────────────────────────────────────────────
 app.use(pinoHttp({ logger }));
 
+// ─── Health (exempt from rate limiting) ──────────────────────────────────────
+app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ─── Rate limiters ────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
