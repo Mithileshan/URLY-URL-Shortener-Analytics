@@ -12,4 +12,5 @@ export class Credentials  {
     static RedisUrl = process.env['REDIS_URL'] || ''
     static JwtSecret = process.env['JWT_SECRET'] || 'changeme'
     static JwtExpiresIn = process.env['JWT_EXPIRES_IN'] || '1d'
+    static NodeEnv = process.env['NODE_ENV'] || 'development'
 }
