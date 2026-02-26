@@ -1,73 +1,134 @@
-# URL Shortener
+# URLY — URL Shortener + Analytics Service
 
-URL Shortener app using NodeJS and Mongodb.
+A scalable URL shortening service built with clean architecture principles, featuring analytics tracking, JWT authentication, and Redis caching.
+
+---
+
+## Overview
+
+URLY is a production-grade URL shortener API built on Node.js with TypeScript. It follows **Domain-Driven Design (DDD)** and **Hexagonal Architecture** to ensure separation of concerns, testability, and extensibility.
+
+---
+
+## Tech Stack
+
+| Layer       | Technology                        |
+|-------------|-----------------------------------|
+| Runtime     | Node.js + TypeScript              |
+| Framework   | Express.js                        |
+| Database    | MongoDB (Mongoose)                |
+| Cache       | Redis                             |
+| Auth        | JWT (Phase 5)                     |
+| Container   | Docker + Docker Compose           |
+| Reverse Proxy | Nginx                           |
+
+---
 
 ## Features
 
-- Clean Architecture in Typescript
-- Tests with Jest
-- Shorten URL
-- Redirect to URL
-- Redis to cache redirects
-- Exposing API with Express
-- Postman Request Import
-- Fake/InMemory Database for Tests
+- [x] URL shortening with expiration
+- [x] Redis caching for fast redirects
+- [x] Clean / Hexagonal Architecture
+- [ ] Click analytics dashboard (Phase 4)
+- [ ] JWT authentication (Phase 5)
+- [ ] Rate limiting (Phase 6)
+- [ ] Custom aliases (Phase 7)
 
-## API Example
+---
 
-### Shorten long url
+## Architecture
+
 ```
-method: POST
-endpoint: /shorten
-body: {
-    long_url: 'https://github.com/Iazzetta'
+src/
+ ├── domain/          # Entities and use case interfaces
+ ├── datalayer/       # Data contracts and service adapters
+ ├── infra/           # Database repositories (MongoDB, FakeDB)
+ ├── presentation/    # Controllers, HTTP contracts, error handling
+ └── main/            # Express server, factories, entry point
+```
+
+The architecture follows the **Dependency Rule**: outer layers depend on inner layers, never the reverse.
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Docker & Docker Compose
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+### Run with Docker
+
+```bash
+docker-compose up --build
+```
+
+### Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## API Reference
+
+### Shorten a URL
+
+```
+POST /shorten
+Content-Type: application/json
+
+{
+  "long_url": "https://example.com/very/long/url"
 }
-response: {
-    statusCode: 200,
-    data: {
-        long_url: 'https://github.com/Iazzetta',
-        short_url: 'www.us.com/bRtlBXhaW1N,
-        expiresAt: '2022-09-23T20:00:00.000Z',
-        createdAt: '2022-09-22T20:00:00.000Z'
-    }
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "long_url": "https://example.com/very/long/url",
+    "short_url": "urly.io/bRtlBX",
+    "expiresAt": "2026-02-27T00:00:00.000Z",
+    "createdAt": "2026-02-26T00:00:00.000Z"
+  }
 }
 ```
 
-### Redirect to long url
-```
-method: GET
-endpoint: /bRtlBXhaW1N
-redirect: 'https://github.com/Iazzetta'
-```
-
-## Requirements
-
-- Docker
-
-## Configuration Enviroument Variables
-
-Create the .env file in the project root and add the necessary variables below:
+### Redirect
 
 ```
-DATABASE_URL="mongodb://...."
-PREFIX_URL="www.us.com/"
-EXPIRATION_HOUR=24
-REDIS_URL="redis://redis:6379"
+GET /:short_code
+→ 301 redirect to original URL
 ```
 
-## Run Production
+---
 
-```bash
-$ docker-compose up --build --scale url-shortener=5
-```
+## Roadmap
 
-## Run Development
-```bash
-$ npm start
-```
+| Phase | Feature                        | Status      |
+|-------|--------------------------------|-------------|
+| 1     | Repository setup               | Done        |
+| 2     | Rebrand + structure cleanup    | Done        |
+| 3     | Core URL shortening logic      | In Progress |
+| 4     | Click analytics                | Planned     |
+| 5     | JWT authentication             | Planned     |
+| 6     | Rate limiting + Redis          | Planned     |
+| 7     | Custom aliases                 | Planned     |
 
-## Test
+---
 
-```bash
-$ npm test
-```
+## Author
+
+**Mithileshan** — [GitHub](https://github.com/Mithileshan)
