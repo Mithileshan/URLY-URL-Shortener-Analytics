@@ -6,9 +6,11 @@ import { ShortenerSchema } from "./schemas/shortener";
 export class MongooseRedirectShortenerRepository implements RedirectShortenerRepository {
     async redirect(short_url: string): Promise<any> {
         const db = await connect(Credentials.DatabaseURI);
-        const shortened = await ShortenerSchema.findOne({ 
-            "short_url": short_url 
-        }).exec()
+        const shortened = await ShortenerSchema.findOneAndUpdate(
+            { short_url, expiresAt: { $gt: new Date() } },
+            { $inc: { clicks: 1 } },
+            { new: true }
+        ).exec()
         db.disconnect()
         return shortened
     }

@@ -11,9 +11,18 @@ export class HandleCreateShortenerController implements CreateShortenerControlle
     constructor(private readonly createShortener: CreateShortener) {}
 
     async handle(long_url: string): Promise<HttpResponse<Shortener>> {
-        
+
+        if (!long_url)
+            return badRequest(ErrorMessages.InvalidUrl)
+
         if (long_url.length > Credentials.MaxBytesLongUrl)
             return badRequest(ErrorMessages.LongUrlMaxSizeExceeded)
+
+        try {
+            new URL(long_url)
+        } catch {
+            return badRequest(ErrorMessages.InvalidUrl)
+        }
 
         try {
             const shortener = await this.createShortener.create(long_url)
