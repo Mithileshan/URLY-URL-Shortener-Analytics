@@ -1,11 +1,18 @@
 import { connect } from 'mongoose';
 import { UrlStats } from '../../../domain/entities/click';
 import { Credentials } from '../../../presentation/helpers/credentials';
+import { redisClient } from '../../cache/redis.client';
 import { ShortenerSchema } from './schemas/shortener';
 import { ClickModel } from './schemas/click';
 
+const STATS_TTL = 5 * 60; // 5 minutes
+
 export class MongooseGetStatsRepository {
     async getStats(shortCode: string): Promise<UrlStats | null> {
+        const cacheKey = `stats:${shortCode}`;
+        const cached = await redisClient.get(cacheKey);
+        if (cached) return JSON.parse(cached) as UrlStats;
+
         const db = await connect(Credentials.DatabaseURI);
 
         const short_url = `${Credentials.PrefixUrl}${shortCode}`;
@@ -37,7 +44,7 @@ export class MongooseGetStatsRepository {
 
         db.disconnect();
 
-        return {
+        const stats: UrlStats = {
             totalClicks,
             last24Hours,
             topReferrers,
@@ -48,5 +55,8 @@ export class MongooseGetStatsRepository {
                 timestamp: c.timestamp,
             })),
         };
+
+        await redisClient.set(cacheKey, JSON.stringify(stats), STATS_TTL);
+        return stats;
     }
 }
