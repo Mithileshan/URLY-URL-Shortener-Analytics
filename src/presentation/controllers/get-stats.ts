@@ -1,17 +1,18 @@
 import { UrlStats } from '../../domain/entities/click';
 import { HttpResponse } from '../contracts/http';
-import { notFound, serverError, success } from '../contracts/response';
+import { forbidden, notFound, serverError, success } from '../contracts/response';
 
 interface GetStatsRepository {
-    getStats: (shortCode: string) => Promise<UrlStats | null>
+    getStats: (shortCode: string, requestingUserId: string) => Promise<UrlStats | null | 'forbidden'>
 }
 
 export class HandleGetStatsController {
     constructor(private readonly repository: GetStatsRepository) {}
 
-    async handle(shortCode: string): Promise<HttpResponse<UrlStats>> {
+    async handle(shortCode: string, requestingUserId: string): Promise<HttpResponse<UrlStats>> {
         try {
-            const stats = await this.repository.getStats(shortCode);
+            const stats = await this.repository.getStats(shortCode, requestingUserId);
+            if (stats === 'forbidden') return forbidden('You do not own this URL');
             if (!stats) return notFound('URL not found');
             return success(stats);
         } catch (error: any) {

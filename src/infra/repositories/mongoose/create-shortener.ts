@@ -7,17 +7,18 @@ import { generateExpiration } from "../../../presentation/helpers/generate-expir
 import { ShortenerSchema } from "./schemas/shortener";
 
 export class MongooseCreateShortenerRepository implements CreateShortenerRepository {
-    async create(long_url: string): Promise<Shortener> {
+    async create(long_url: string, ownerId: string): Promise<Shortener> {
 
         const db = await connect(Credentials.DatabaseURI);
-        const [createdAt, expiresAt] = generateExpiration()
-        const shortened = await new ShortenerSchema({ 
-            long_url: long_url,
+        const [createdAt, expiresAt] = generateExpiration();
+        const shortened = await new ShortenerSchema({
+            long_url,
             short_url: `${Credentials.PrefixUrl}${nanoid(Credentials.MaxBytesShortUrl)}`,
-            createdAt: createdAt,
-            expiresAt: expiresAt
-         }).save();
-        db.disconnect()
-        return shortened
+            ownerId,
+            createdAt,
+            expiresAt,
+        }).save();
+        db.disconnect();
+        return shortened;
     }
 }

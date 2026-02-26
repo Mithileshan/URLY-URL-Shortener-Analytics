@@ -2,11 +2,14 @@ import express from 'express'
 import os from 'os';
 import { notFound } from '../../../presentation/contracts/response';
 import { Credentials } from '../../../presentation/helpers/credentials';
+import { authMiddleware, AuthRequest } from '../../../presentation/middleware/auth';
 import { redisClient } from '../../../infra/cache/redis.client';
 import { MongooseTrackClickRepository } from '../../../infra/repositories/mongoose/track-click';
+import { makeAuthController } from '../../factories/mongodb/auth';
 import { makeCreateShortenerController } from '../../factories/mongodb/create-shortener';
 import { makeRedirectShortenerController } from '../../factories/mongodb/redirect-shortener';
 import { makeGetStatsController } from '../../factories/mongodb/get-stats';
+import { makeListMyUrlsController } from '../../factories/mongodb/list-my-urls';
 
 const REDIRECT_TTL = 60 * 60; // 1 hour
 
@@ -16,34 +19,50 @@ app.use(express.urlencoded({ extended: true }));
 
 const trackClickRepo = new MongooseTrackClickRepository();
 
-/**
- * POST /shorten
- * Body: { long_url: string }
- * Creates a shortened URL
- */
-app.post('/shorten', async (req: express.Request, res: express.Response) => {
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+app.post('/api/auth/register', async (req, res) => {
+    const { name, email, password } = req.body;
+    const controller = makeAuthController();
+    const httpResponse = await controller.register(name, email, password);
+    res.status(httpResponse.statusCode).json(httpResponse.data);
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    const controller = makeAuthController();
+    const httpResponse = await controller.login(email, password);
+    res.status(httpResponse.statusCode).json(httpResponse.data);
+});
+
+// ─── URL Management (protected) ──────────────────────────────────────────────
+
+app.post('/api/url', authMiddleware, async (req: AuthRequest, res) => {
     const long_url = req.body.long_url;
+    const ownerId = req.user!.id;
     const controller = makeCreateShortenerController();
-    const httpResponse = await controller.handle(long_url);
+    const httpResponse = await controller.handle(long_url, ownerId);
     res.status(httpResponse.statusCode).json(httpResponse.data);
 });
 
-/**
- * GET /api/url/:shortCode/stats
- * Returns click analytics for a shortened URL (cached 5 min)
- */
-app.get('/api/url/:shortCode/stats', async (req: express.Request, res: express.Response) => {
+app.get('/api/url/mine', authMiddleware, async (req: AuthRequest, res) => {
+    const ownerId = req.user!.id;
+    const controller = makeListMyUrlsController();
+    const httpResponse = await controller.handle(ownerId);
+    res.status(httpResponse.statusCode).json(httpResponse.data);
+});
+
+app.get('/api/url/:shortCode/stats', authMiddleware, async (req: AuthRequest, res) => {
     const { shortCode } = req.params;
+    const requestingUserId = req.user!.id;
     const controller = makeGetStatsController();
-    const httpResponse = await controller.handle(shortCode);
+    const httpResponse = await controller.handle(shortCode, requestingUserId);
     res.status(httpResponse.statusCode).json(httpResponse.data);
 });
 
-/**
- * GET /:short_url
- * Redirects to original URL, tracks click, and invalidates stats cache
- */
-app.get('/:short_url', async (req: express.Request, res: express.Response) => {
+// ─── Public redirect ─────────────────────────────────────────────────────────
+
+app.get('/:short_url', async (req, res) => {
     const short_url = req.params.short_url;
     const controller = makeRedirectShortenerController();
 

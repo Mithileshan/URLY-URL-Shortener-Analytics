@@ -8,11 +8,7 @@ import { ClickModel } from './schemas/click';
 const STATS_TTL = 5 * 60; // 5 minutes
 
 export class MongooseGetStatsRepository {
-    async getStats(shortCode: string): Promise<UrlStats | null> {
-        const cacheKey = `stats:${shortCode}`;
-        const cached = await redisClient.get(cacheKey);
-        if (cached) return JSON.parse(cached) as UrlStats;
-
+    async getStats(shortCode: string, requestingUserId: string): Promise<UrlStats | null | 'forbidden'> {
         const db = await connect(Credentials.DatabaseURI);
 
         const short_url = `${Credentials.PrefixUrl}${shortCode}`;
@@ -21,6 +17,19 @@ export class MongooseGetStatsRepository {
         if (!shortener) {
             db.disconnect();
             return null;
+        }
+
+        if (shortener.ownerId !== requestingUserId) {
+            db.disconnect();
+            return 'forbidden';
+        }
+
+        // Check cache after ownership is verified
+        const cacheKey = `stats:${shortCode}`;
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            db.disconnect();
+            return JSON.parse(cached) as UrlStats;
         }
 
         const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);

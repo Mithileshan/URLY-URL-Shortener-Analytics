@@ -10,7 +10,7 @@ export class HandleCreateShortenerController implements CreateShortenerControlle
 
     constructor(private readonly createShortener: CreateShortener) {}
 
-    async handle(long_url: string): Promise<HttpResponse<Shortener>> {
+    async handle(long_url: string, ownerId: string): Promise<HttpResponse<Shortener>> {
 
         if (!long_url)
             return badRequest(ErrorMessages.InvalidUrl)
@@ -25,7 +25,7 @@ export class HandleCreateShortenerController implements CreateShortenerControlle
         }
 
         try {
-            const shortener = await this.createShortener.create(long_url)
+            const shortener = await this.createShortener.create(long_url, ownerId)
             return success(shortener)
         } catch (error: any) {
             return serverError(error.message)

@@ -7,7 +7,7 @@ export class CreateShortenerService implements CreateShortener {
         private readonly createShortenerRepository: CreateShortenerRepository
     ) {}
 
-    async create(long_url: string): Promise<Shortener> {
-        return this.createShortenerRepository.create(long_url)
+    async create(long_url: string, ownerId: string): Promise<Shortener> {
+        return this.createShortenerRepository.create(long_url, ownerId)
     }
 }
