@@ -7,11 +7,13 @@ import { fakeShortener } from "../../data-sources/shortener"
 
 export class FakeCreateShortenerRepository implements CreateShortenerRepository {
     
-    async create (long_url: string): Promise<Shortener> {
+    async create (long_url: string, ownerId: string): Promise<Shortener> {
         const [createdAt, expiresAt] = generateExpiration()
         const newSite:Shortener = {
             long_url: long_url,
             short_url: `${Credentials.PrefixUrl}${nanoid(Credentials.MaxBytesShortUrl)}`,
+            clicks: 0,
+            ownerId: ownerId,
             createdAt: createdAt,
             expiresAt: expiresAt
         }

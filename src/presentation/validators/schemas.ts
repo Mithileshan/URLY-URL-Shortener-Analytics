@@ -23,7 +23,7 @@ export const validate = (schema: z.ZodSchema) =>
             res.status(400).json({
                 error: {
                     code: 'VALIDATION_ERROR',
-                    message: result.error.errors[0].message,
+                    message: result.error.issues[0].message,
                 },
             });
             return;
