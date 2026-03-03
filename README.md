@@ -56,31 +56,6 @@ A production-grade URL shortening and analytics platform built with TypeScript, 
 | CI             | GitHub Actions                           |
 
 ---
-
-## Features
-
-| Feature                           | Status |
-|-----------------------------------|--------|
-| URL shortening with expiration    | ✅ |
-| Per-user URL ownership            | ✅ |
-| Click tracking (ip, ua, referrer) | ✅ |
-| Analytics endpoint                | ✅ |
-| Redis redirect cache (1h TTL)     | ✅ |
-| Redis stats cache (5min TTL)      | ✅ |
-| Cache invalidation on click       | ✅ |
-| JWT authentication                | ✅ |
-| Owner-only analytics enforcement  | ✅ |
-| Tiered rate limiting              | ✅ |
-| Zod request validation            | ✅ |
-| Helmet security headers           | ✅ |
-| Structured JSON logging (pino)    | ✅ |
-| Standardized error envelope       | ✅ |
-| Multi-stage Docker build          | ✅ |
-| Docker Compose (app/mongo/redis)  | ✅ |
-| GitHub Actions CI                 | ✅ |
-
----
-
 ## Security Layer
 
 ```
@@ -99,34 +74,6 @@ All error responses follow a consistent envelope:
 ```
 
 ---
-
-## Folder Structure
-
-```
-src/
- ├── domain/
- │    ├── entities/       # Shortener, Click, User, UrlStats (framework-agnostic types)
- │    └── usecases/       # Use case interfaces
- ├── datalayer/
- │    ├── contracts/      # Repository interfaces
- │    └── services/       # Application services (thin wrappers)
- ├── infra/
- │    ├── cache/          # Redis singleton with graceful fallback
- │    ├── logging/        # Pino logger
- │    ├── security/       # bcrypt + JWT helpers
- │    └── repositories/
- │         └── mongoose/  # MongoDB implementations + schemas
- ├── presentation/
- │    ├── contracts/      # HTTP types
- │    ├── controllers/    # Thin controllers (validate → delegate → respond)
- │    ├── middleware/     # Auth middleware, error handler
- │    ├── validators/     # Zod schemas + validate() factory
- │    ├── helpers/        # Credentials, send-response
- │    └── errors/         # Error classes
- └── main/
-      ├── adapters/express/ # Server entry point, route wiring
-      └── factories/        # Dependency injection factories
-```
 
 ---
 
@@ -225,23 +172,6 @@ Stats flow:
   Redis MISS → 4-query MongoDB aggregate, cache result
   On redirect → stats cache invalidated (eventual consistency)
 ```
-
----
-
-## Roadmap
-
-| Phase | Feature                            | Status  |
-|-------|------------------------------------|---------|
-| 1     | Repository setup                   | ✅ Done |
-| 2     | Rebrand + structure cleanup        | ✅ Done |
-| 3     | Core URL shortening logic          | ✅ Done |
-| 4     | Click analytics + tracking         | ✅ Done |
-| 5     | Redis caching layer                | ✅ Done |
-| 6     | JWT auth + user ownership          | ✅ Done |
-| 7     | Production hardening               | ✅ Done |
-| 8     | Docker + CI + documentation        | ✅ Done |
-| 9     | Custom aliases                     | Planned |
-| 10    | Geo-IP analytics                   | Planned |
 
 ---
 
